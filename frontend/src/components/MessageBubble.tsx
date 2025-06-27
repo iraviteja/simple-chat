@@ -14,10 +14,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn }) => {
         return (
           <div className="max-w-sm">
             <img
-              src={`http://localhost:5005${message.fileUrl}`}
+              src={`${import.meta.env.VITE_API_URL || 'http://localhost:5005'}${message.fileUrl}`}
               alt={message.fileName}
               className="rounded-lg w-full cursor-pointer hover:opacity-90"
-              onClick={() => window.open(`http://localhost:5005${message.fileUrl}`, '_blank')}
+              onClick={() => window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5005'}${message.fileUrl}`, '_blank')}
             />
             {message.content && (
               <p className="mt-2 text-sm">{message.content}</p>
@@ -38,7 +38,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn }) => {
               </p>
             </div>
             <a
-              href={`http://localhost:5005${message.fileUrl}`}
+              href={`${import.meta.env.VITE_API_URL || 'http://localhost:5005'}${message.fileUrl}`}
               download
               className="text-blue-600 hover:text-blue-700"
             >
@@ -53,7 +53,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn }) => {
             <video
               controls
               className="rounded-lg w-full"
-              src={`http://localhost:5005${message.fileUrl}`}
+              src={`${import.meta.env.VITE_API_URL || 'http://localhost:5005'}${message.fileUrl}`}
             />
             {message.content && (
               <p className="mt-2 text-sm">{message.content}</p>
