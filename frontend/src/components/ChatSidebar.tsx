@@ -29,6 +29,12 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   const { user, logout } = useAuth();
   const { onlineUsers } = useSocket();
 
+  // Calculate total unread count
+  const totalUnread = [
+    ...conversations.map(c => c.unreadCount || 0),
+    ...groups.map(g => g.unreadCount || 0)
+  ].reduce((sum, count) => sum + count, 0);
+
   const filteredConversations = conversations.filter((conv) =>
     conv.user?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -50,7 +56,14 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
               <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-slate-900"></div>
             </div>
             <div>
-              <h3 className="font-semibold text-white">{user?.name}</h3>
+              <h3 className="font-semibold text-white flex items-center space-x-2">
+                <span>{user?.name}</span>
+                {totalUnread > 0 && (
+                  <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 animate-pulse">
+                    {totalUnread} new
+                  </span>
+                )}
+              </h3>
               <p className="text-xs text-green-400">Active now</p>
             </div>
           </div>
@@ -147,15 +160,22 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         )}
                       </div>
                       <div className="flex-1 overflow-hidden">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mb-1">
                           <h4 className="font-semibold text-white">
                             {conv.user.name}
                           </h4>
-                          <span className="text-xs text-slate-400">
-                            {format(new Date(conv.lastMessage.createdAt), "HH:mm")}
-                          </span>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-slate-400">
+                              {format(new Date(conv.lastMessage.createdAt), "HH:mm")}
+                            </span>
+                            {conv.unreadCount && conv.unreadCount > 0 && (
+                              <span className="bg-purple-500 text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] text-center">
+                                {conv.unreadCount}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-sm text-slate-400 truncate mt-1">
+                        <p className="text-sm text-slate-400 truncate">
                           {conv.lastMessage.isDeleted ? (
                             <span className="italic">Message deleted</span>
                           ) : conv.lastMessage.type === "text" ? (
@@ -208,9 +228,16 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         <Users className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-white">
-                          {group.name}
-                        </h4>
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-semibold text-white">
+                            {group.name}
+                          </h4>
+                          {group.unreadCount && group.unreadCount > 0 && (
+                            <span className="bg-purple-500 text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] text-center">
+                              {group.unreadCount}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-slate-400">
                           {group.members.length} members
                         </p>

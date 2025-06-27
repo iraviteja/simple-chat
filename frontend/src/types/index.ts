@@ -40,9 +40,11 @@ export interface Group {
   members: User[];
   groupImage?: string;
   createdAt: string;
+  unreadCount?: number;
 }
 
 export interface Conversation {
   user: User;
   lastMessage: Message;
+  unreadCount?: number;
 }

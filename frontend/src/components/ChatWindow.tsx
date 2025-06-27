@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, Paperclip, Image, FileText, Film, MoreVertical, Phone, Video, Info, X } from "lucide-react";
+import { Send, Paperclip, Image, FileText, Film, Phone, Video, Info, X } from "lucide-react";
 import type { User, Group, Message } from "../types";
 import { useAuth } from "../hooks/useAuth";
 import { useSocket } from "../hooks/useSocket";
@@ -42,6 +42,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
 
   useEffect(() => {
     fetchMessages();
+    markMessagesAsRead();
   }, [chatData._id]);
 
   useEffect(() => {
@@ -130,6 +131,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const markMessagesAsRead = async () => {
+    try {
+      if (chatType === "user") {
+        await api.put(`/messages/read/${chatData._id}`);
+      } else {
+        await api.put(`/messages/read/group/${chatData._id}`);
+      }
+    } catch (error) {
+      console.error("Failed to mark messages as read:", error);
+    }
   };
 
   const handleTyping = () => {

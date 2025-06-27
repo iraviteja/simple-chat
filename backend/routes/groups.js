@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Group = require('../models/Group');
 const User = require('../models/User');
+const Message = require('../models/Message');
 const { protect } = require('../middleware/auth');
 
 // Create group
@@ -36,11 +37,25 @@ router.post('/', protect, async (req, res) => {
 router.get('/my-groups', protect, async (req, res) => {
   try {
     const groups = await Group.find({ members: req.user._id })
-      .populate('members', 'username profileImage')
-      .populate('createdBy', 'username')
+      .populate('members', 'name')
+      .populate('createdBy', 'name')
       .sort('-createdAt');
 
-    res.json(groups);
+    // Get unread counts for each group
+    const groupsWithUnread = await Promise.all(groups.map(async (group) => {
+      const unreadCount = await Message.countDocuments({
+        group: group._id,
+        sender: { $ne: req.user._id },
+        read: false
+      });
+
+      return {
+        ...group.toObject(),
+        unreadCount
+      };
+    }));
+
+    res.json(groupsWithUnread);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

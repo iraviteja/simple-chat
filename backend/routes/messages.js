@@ -168,7 +168,7 @@ router.get("/conversations", protect, async (req, res) => {
   try {
     const userId = req.user._id;
 
-    // Get latest message from each conversation
+    // Get latest message from each conversation with unread count
     const conversations = await Message.aggregate([
       {
         $match: {
@@ -184,7 +184,27 @@ router.get("/conversations", protect, async (req, res) => {
             $cond: [{ $eq: ["$sender", userId] }, "$receiver", "$sender"],
           },
           lastMessage: { $first: "$$ROOT" },
+          messages: { $push: "$$ROOT" },
         },
+      },
+      {
+        $project: {
+          _id: 1,
+          lastMessage: 1,
+          unreadCount: {
+            $size: {
+              $filter: {
+                input: "$messages",
+                cond: {
+                  $and: [
+                    { $eq: ["$$this.receiver", userId] },
+                    { $eq: ["$$this.read", false] }
+                  ]
+                }
+              }
+            }
+          }
+        }
       },
       {
         $lookup: {
@@ -205,6 +225,7 @@ router.get("/conversations", protect, async (req, res) => {
             isOnline: 1,
           },
           lastMessage: 1,
+          unreadCount: 1,
         },
       },
     ]);
@@ -296,6 +317,51 @@ router.delete("/:messageId", protect, async (req, res) => {
     }
 
     res.json(deletedMessage);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Mark messages as read
+router.put("/read/:userId", protect, async (req, res) => {
+  try {
+    // Mark all messages from a specific user as read
+    await Message.updateMany(
+      {
+        sender: req.params.userId,
+        receiver: req.user._id,
+        read: false
+      },
+      {
+        read: true
+      }
+    );
+
+    res.json({ message: "Messages marked as read" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Mark group messages as read
+router.put("/read/group/:groupId", protect, async (req, res) => {
+  try {
+    // Get the last read timestamp for this user in this group
+    const lastReadTime = new Date();
+    
+    // Mark all group messages as read up to current time
+    await Message.updateMany(
+      {
+        group: req.params.groupId,
+        sender: { $ne: req.user._id },
+        createdAt: { $lte: lastReadTime }
+      },
+      {
+        read: true
+      }
+    );
+
+    res.json({ message: "Group messages marked as read" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
