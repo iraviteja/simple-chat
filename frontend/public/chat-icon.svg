@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="248" fill="#4CAF50" />
+  
+  <!-- Chat Bubble - Centered and slightly larger -->
+  <path d="M408 176C408 154.3 390.7 137 369 137H143C121.3 137 104 154.3 104 176V336C104 357.7 121.3 375 143 375H221.5L256 409.5L290.5 375H369C390.7 375 408 357.7 408 336V176Z" 
+        fill="white" 
+        stroke="white" 
+        stroke-width="12" 
+        stroke-linejoin="round"/>
+  
+  <!-- Dots - Adjusted for new bubble position -->
+  <circle cx="190" cy="256" r="18" fill="#4CAF50"/>
+  <circle cx="256" cy="256" r="18" fill="#4CAF50"/>
+  <circle cx="322" cy="256" r="18" fill="#4CAF50"/>
+</svg> 
