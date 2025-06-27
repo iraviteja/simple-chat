@@ -1,82 +1,79 @@
-import React, { createContext, useState, useContext, useEffect } from 'react'
-import type { User } from '../types'
-import api from '../services/api'
+import React, { createContext, useState, useEffect } from "react";
+import type { User } from "../types";
+import api from "../services/api";
 
 interface AuthContextType {
-  user: User | null
-  token: string | null
-  login: (email: string, password: string) => Promise<void>
-  register: (username: string, email: string, password: string) => Promise<void>
-  logout: () => void
-  isLoading: boolean
+  user: User | null;
+  token: string | null;
+  joinChat: (name: string) => Promise<void>;
+  logout: () => Promise<void>;
+  isLoading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider')
-  }
-  return context
-}
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'))
-  const [isLoading, setIsLoading] = useState(true)
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [user, setUser] = useState<User | null>(() => {
+    const savedUser = localStorage.getItem("user");
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+  const [token, setToken] = useState<string | null>(() =>
+    localStorage.getItem("token")
+  );
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-      fetchUserProfile()
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user));
     } else {
-      setIsLoading(false)
+      localStorage.removeItem("user");
     }
-  }, [token])
+  }, [user]);
 
-  const fetchUserProfile = async () => {
+  const joinChat = async (name: string) => {
+    setIsLoading(true);
     try {
-      const response = await api.get('/users/profile')
-      setUser(response.data)
-    } catch (error) {
-      localStorage.removeItem('token')
-      setToken(null)
+      const response = await api.post("/auth/join", { name });
+      const { token, ...userData } = response.data;
+
+      localStorage.setItem("token", token);
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      setToken(token);
+      setUser(userData);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  const login = async (email: string, password: string) => {
-    const response = await api.post('/auth/login', { email, password })
-    const { token, ...userData } = response.data
-    
-    localStorage.setItem('token', token)
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-    setToken(token)
-    setUser(userData)
-  }
-
-  const register = async (username: string, email: string, password: string) => {
-    const response = await api.post('/auth/register', { username, email, password })
-    const { token, ...userData } = response.data
-    
-    localStorage.setItem('token', token)
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-    setToken(token)
-    setUser(userData)
-  }
-
-  const logout = () => {
-    localStorage.removeItem('token')
-    delete api.defaults.headers.common['Authorization']
-    setToken(null)
-    setUser(null)
-  }
+  const logout = async () => {
+    setIsLoading(true);
+    try {
+      await api.post("/auth/logout");
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      delete api.defaults.headers.common["Authorization"];
+      setToken(null);
+      setUser(null);
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, joinChat, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
-  )
-}
+  );
+};
+
+export default AuthContext;

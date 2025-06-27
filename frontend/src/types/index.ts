@@ -1,39 +1,37 @@
 export interface User {
-  _id: string
-  username: string
-  email: string
-  profileImage?: string
-  isOnline?: boolean
-  lastSeen?: Date
+  _id: string;
+  name: string;
+  isOnline?: boolean;
+  lastSeen?: Date;
 }
 
 export interface Message {
-  _id: string
-  sender: User
-  receiver?: User
-  group?: Group
-  content: string
-  type: 'text' | 'image' | 'pdf' | 'video'
-  fileUrl?: string
-  fileName?: string
-  fileSize?: number
-  read: boolean
-  delivered: boolean
-  createdAt: string
-  updatedAt: string
+  _id: string;
+  sender: User;
+  receiver?: User;
+  group?: Group;
+  content: string;
+  type: "text" | "image" | "pdf" | "video";
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  read: boolean;
+  delivered: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Group {
-  _id: string
-  name: string
-  description?: string
-  createdBy: User
-  members: User[]
-  groupImage?: string
-  createdAt: string
+  _id: string;
+  name: string;
+  description?: string;
+  createdBy: User;
+  members: User[];
+  groupImage?: string;
+  createdAt: string;
 }
 
 export interface Conversation {
-  user: User
-  lastMessage: Message
+  user: User;
+  lastMessage: Message;
 }
