@@ -30,7 +30,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   const { onlineUsers } = useSocket();
 
   const filteredConversations = conversations.filter((conv) =>
-    conv.user.name.toLowerCase().includes(searchTerm.toLowerCase())
+    conv.user?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredGroups = groups.filter((group) =>
