@@ -81,11 +81,10 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose, onSelectUser }) => {
                     onClick={() => onSelectUser(user)}
                   >
                     <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-700 font-semibold">
-                      {user.username[0].toUpperCase()}
+                      {user.name[0].toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-medium">{user.username}</p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
+                      <p className="font-medium">{user.name}</p>
                     </div>
                   </div>
                 ))}

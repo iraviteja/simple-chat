@@ -131,7 +131,7 @@ const CreateGroup: React.FC<CreateGroupProps> = ({ onClose, onGroupCreated }) =>
                     key={user._id}
                     className="flex items-center space-x-1 bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm"
                   >
-                    <span>{user.username}</span>
+                    <span>{user.name}</span>
                     <button
                       onClick={() => toggleUserSelection(user)}
                       className="hover:text-green-600"
@@ -163,10 +163,10 @@ const CreateGroup: React.FC<CreateGroupProps> = ({ onClose, onGroupCreated }) =>
                       onClick={() => toggleUserSelection(user)}
                     >
                       <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-700 text-sm font-semibold">
-                        {user.username[0].toUpperCase()}
+                        {user.name[0].toUpperCase()}
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium">{user.username}</p>
+                        <p className="text-sm font-medium">{user.name}</p>
                       </div>
                     </div>
                   ))}

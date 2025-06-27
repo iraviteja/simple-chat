@@ -74,7 +74,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn }) => {
       }`}>
         {!isOwn && message.group && (
           <p className="text-xs font-semibold mb-1 opacity-70">
-            {message.sender.username}
+            {message.sender.name}
           </p>
         )}
         {renderContent()}
