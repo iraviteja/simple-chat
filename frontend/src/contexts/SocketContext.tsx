@@ -27,7 +27,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => {
     if (token) {
-      const newSocket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5005', {
+      const socketURL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5005'
+      const newSocket = io(socketURL.replace(/\/$/, ''), {
         auth: { token },
         withCredentials: true
       })

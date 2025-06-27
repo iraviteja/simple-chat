@@ -8,16 +8,17 @@ interface MessageBubbleProps {
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn }) => {
+  const baseURL = (import.meta.env.VITE_API_URL || 'http://localhost:5005').replace(/\/$/, '')
   const renderContent = () => {
     switch (message.type) {
       case 'image':
         return (
           <div className="max-w-sm">
             <img
-              src={`${import.meta.env.VITE_API_URL || 'http://localhost:5005'}${message.fileUrl}`}
+              src={`${baseURL}${message.fileUrl}`}
               alt={message.fileName}
               className="rounded-lg w-full cursor-pointer hover:opacity-90"
-              onClick={() => window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5005'}${message.fileUrl}`, '_blank')}
+              onClick={() => window.open(`${baseURL}${message.fileUrl}`, '_blank')}
             />
             {message.content && (
               <p className="mt-2 text-sm">{message.content}</p>
@@ -38,7 +39,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn }) => {
               </p>
             </div>
             <a
-              href={`${import.meta.env.VITE_API_URL || 'http://localhost:5005'}${message.fileUrl}`}
+              href={`${baseURL}${message.fileUrl}`}
               download
               className="text-blue-600 hover:text-blue-700"
             >
@@ -53,7 +54,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn }) => {
             <video
               controls
               className="rounded-lg w-full"
-              src={`${import.meta.env.VITE_API_URL || 'http://localhost:5005'}${message.fileUrl}`}
+              src={`${baseURL}${message.fileUrl}`}
             />
             {message.content && (
               <p className="mt-2 text-sm">{message.content}</p>
