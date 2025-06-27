@@ -20,7 +20,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const typingTimeoutRef = useRef<NodeJS.Timeout>()
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   
   const { user } = useAuth()
   const { socket, sendMessage, typing: emitTyping, stopTyping, onlineUsers } = useSocket()
@@ -268,7 +268,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
               setNewMessage(e.target.value)
               handleTyping()
             }}
-            onKeyPress={(e) => {
+            onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 handleSendMessage()
               }
