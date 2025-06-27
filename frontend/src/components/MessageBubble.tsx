@@ -145,8 +145,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn, onMessage
   return (
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-2 group`}>
       <div className="relative">
-        <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-          isOwn ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-900'
+        <div className={`max-w-xs lg:max-w-md px-4 py-3 ${
+          isOwn 
+            ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-l-2xl rounded-tr-2xl shadow-md' 
+            : 'bg-white text-gray-900 rounded-r-2xl rounded-tl-2xl shadow-sm border border-gray-100'
         }`}>
           {!isOwn && message.group && (
             <p className="text-xs font-semibold mb-1 opacity-70">
@@ -155,7 +157,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn, onMessage
           )}
           {renderContent()}
           <div className={`flex items-center justify-between mt-1 ${
-            isOwn ? 'text-green-100' : 'text-gray-500'
+            isOwn ? 'text-purple-100' : 'text-gray-500'
           }`}>
             <div className="flex items-center space-x-1">
               <span className="text-xs">
@@ -178,29 +180,29 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn, onMessage
         </div>
         
         {isOwn && !message.isDeleted && message.type === 'text' && (
-          <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-1 hover:bg-gray-200 rounded"
+              className="p-1.5 bg-white shadow-md hover:bg-gray-50 rounded-full transition-colors"
             >
               <MoreVertical className="w-4 h-4 text-gray-600" />
             </button>
             
             {showMenu && (
-              <div className="absolute right-0 mt-1 bg-white shadow-lg rounded-lg py-1 z-10">
+              <div className="absolute right-0 mt-2 bg-white shadow-xl rounded-xl py-1 z-10 min-w-[120px] border border-gray-100">
                 <button
                   onClick={handleEdit}
-                  className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-100 w-full text-left"
+                  className="flex items-center space-x-2 px-4 py-2 hover:bg-purple-50 w-full text-left transition-colors"
                 >
-                  <Edit2 className="w-4 h-4" />
-                  <span className="text-sm">Edit</span>
+                  <Edit2 className="w-4 h-4 text-purple-600" />
+                  <span className="text-sm font-medium">Edit</span>
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-100 w-full text-left text-red-600"
+                  className="flex items-center space-x-2 px-4 py-2 hover:bg-red-50 w-full text-left text-red-600 transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
-                  <span className="text-sm">Delete</span>
+                  <span className="text-sm font-medium">Delete</span>
                 </button>
               </div>
             )}

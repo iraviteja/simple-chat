@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, Paperclip, Image, FileText, Film } from "lucide-react";
+import { Send, Paperclip, Image, FileText, Film, MoreVertical, Phone, Video, Info } from "lucide-react";
 import type { User, Group, Message } from "../types";
 import { useAuth } from "../hooks/useAuth";
 import { useSocket } from "../hooks/useSocket";
@@ -164,17 +164,24 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
       const formData = new FormData();
       formData.append("file", selectedFile);
       formData.append("content", newMessage);
-      formData.append(chatType === "user" ? "receiver" : "group", chatData._id);
+      if (messageData.receiver) {
+        formData.append("receiver", messageData.receiver);
+      } else if (messageData.group) {
+        formData.append("group", messageData.group);
+      }
 
       const fileType = selectedFile.type.startsWith("image/")
         ? "image"
         : selectedFile.type === "application/pdf"
         ? "pdf"
-        : "video";
+        : selectedFile.type.startsWith("video/")
+        ? "video"
+        : "text";
+
       formData.append("type", fileType);
 
       try {
-        const response = await api.post("/messages", formData, {
+        await api.post("/messages", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         setSelectedFile(null);
@@ -186,12 +193,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
     }
 
     setNewMessage("");
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-    stopTyping(
-      chatType === "user" ? { receiver: chatData._id } : { group: chatData._id }
-    );
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -213,50 +214,72 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-white">
+    <div className="flex-1 flex flex-col bg-slate-50">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-700 font-semibold">
-              {chatType === "user" ? (
-                (chatData as User).name[0].toUpperCase()
-              ) : (
-                <Send />
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold shadow-md ${
+                chatType === "user" 
+                  ? "bg-gradient-to-br from-blue-500 to-purple-500"
+                  : "bg-gradient-to-br from-green-500 to-teal-500"
+              }`}>
+                {chatType === "user" ? (
+                  (chatData as User).name[0].toUpperCase()
+                ) : (
+                  <Send />
+                )}
+              </div>
+              {chatType === "user" && onlineUsers.has(chatData._id) && (
+                <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
               )}
             </div>
-            {chatType === "user" && onlineUsers.has(chatData._id) && (
-              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-            )}
+            <div>
+              <h3 className="font-semibold text-gray-900 text-lg">
+                {chatType === "user"
+                  ? (chatData as User).name
+                  : (chatData as Group).name}
+              </h3>
+              <p className="text-sm text-gray-500">
+                {chatType === "user"
+                  ? onlineUsers.has(chatData._id)
+                    ? "Active now"
+                    : "Offline"
+                  : `${(chatData as Group).members.length} members`}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold text-gray-900">
-              {chatType === "user"
-                ? (chatData as User).name
-                : (chatData as Group).name}
-            </h3>
-            <p className="text-sm text-gray-500">
-              {chatType === "user"
-                ? onlineUsers.has(chatData._id)
-                  ? "Online"
-                  : "Offline"
-                : `${(chatData as Group).members.length} members`}
-            </p>
+          
+          <div className="flex items-center space-x-2">
+            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+              <Phone className="w-5 h-5" />
+            </button>
+            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+              <Video className="w-5 h-5" />
+            </button>
+            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+              <Info className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-gradient-to-b from-slate-50 to-white">
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-4 border-purple-500 border-t-transparent"></div>
           </div>
         ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-gray-500">
-              No messages yet. Start a conversation!
-            </p>
+            <div className="text-center">
+              <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                <Send className="w-10 h-10 text-gray-400" />
+              </div>
+              <p className="text-gray-500 text-lg">No messages yet</p>
+              <p className="text-gray-400 text-sm mt-1">Start a conversation!</p>
+            </div>
           </div>
         ) : (
           messages.map((message) => (
@@ -274,21 +297,22 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
         )}
         {otherTyping && (
           <div className="flex items-center space-x-2 text-gray-500 text-sm">
-            <div className="flex space-x-1">
-              <div
-                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                style={{ animationDelay: "0ms" }}
-              ></div>
-              <div
-                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                style={{ animationDelay: "150ms" }}
-              ></div>
-              <div
-                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                style={{ animationDelay: "300ms" }}
-              ></div>
+            <div className="bg-gray-200 px-4 py-2 rounded-2xl">
+              <div className="flex space-x-1">
+                <div
+                  className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
+                  style={{ animationDelay: "0ms" }}
+                ></div>
+                <div
+                  className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
+                  style={{ animationDelay: "150ms" }}
+                ></div>
+                <div
+                  className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
+                  style={{ animationDelay: "300ms" }}
+                ></div>
+              </div>
             </div>
-            <span>{(chatData as User).name} is typing...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -296,61 +320,77 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
 
       {/* Selected File Preview */}
       {selectedFile && (
-        <div className="px-6 py-2 bg-gray-50 border-t border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              {getFileIcon(selectedFile)}
-              <span className="text-sm text-gray-600">{selectedFile.name}</span>
+        <div className="px-6 py-3 bg-gray-100 border-t border-gray-200">
+          <div className="flex items-center justify-between bg-white rounded-lg p-3">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
+                {getFileIcon(selectedFile)}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">{selectedFile.name}</p>
+                <p className="text-xs text-gray-500">
+                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              </div>
             </div>
             <button
               onClick={() => setSelectedFile(null)}
-              className="text-red-500 hover:text-red-700 text-sm"
+              className="text-gray-400 hover:text-gray-600"
             >
-              Remove
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
         </div>
       )}
 
-      {/* Message Input */}
-      <div className="px-6 py-4 border-t border-gray-200">
-        <div className="flex items-center space-x-4">
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            accept="image/*,application/pdf,video/*"
-            onChange={handleFileSelect}
-          />
+      {/* Input */}
+      <div className="px-6 py-4 bg-white border-t border-gray-200">
+        <div className="flex items-end space-x-3">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
+            className="p-3 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
           >
-            <Paperclip className="w-5 h-5" />
+            <Paperclip className="w-6 h-6" />
           </button>
-          <input
-            type="text"
-            placeholder="Type a message..."
-            className="flex-1 px-4 py-2 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500"
-            value={newMessage}
-            onChange={(e) => {
-              setNewMessage(e.target.value);
-              handleTyping();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSendMessage();
-              }
-            }}
-          />
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder="Type a message..."
+              className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+              value={newMessage}
+              onChange={(e) => {
+                setNewMessage(e.target.value);
+                handleTyping();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+            />
+          </div>
           <button
             onClick={handleSendMessage}
             disabled={!newMessage.trim() && !selectedFile}
-            className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`p-3 rounded-lg transition-all transform ${
+              newMessage.trim() || selectedFile
+                ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 hover:scale-105 shadow-lg"
+                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            }`}
           >
-            <Send className="w-5 h-5" />
+            <Send className="w-6 h-6" />
           </button>
         </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          accept="image/*,application/pdf,video/*"
+          onChange={handleFileSelect}
+        />
       </div>
     </div>
   );

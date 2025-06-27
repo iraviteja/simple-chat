@@ -5,6 +5,7 @@ import OnlineUsersSidebar from "../components/OnlineUsersSidebar";
 import type { User, Group, Conversation } from "../types";
 import api from "../services/api";
 import { useSocket } from "../hooks/useSocket";
+import { MessageSquare } from "lucide-react";
 
 const Chat = () => {
   const [selectedChat, setSelectedChat] = useState<{
@@ -91,7 +92,7 @@ const Chat = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-50">
       <ChatSidebar
         conversations={conversations}
         groups={groups}
@@ -102,12 +103,15 @@ const Chat = () => {
       {selectedChat ? (
         <ChatWindow chatType={selectedChat.type} chatData={selectedChat.data} />
       ) : (
-        <div className="flex-1 flex items-center justify-center bg-white">
+        <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50">
           <div className="text-center">
-            <h3 className="text-2xl font-semibold text-gray-900 mb-2">
+            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+              <MessageSquare className="w-12 h-12 text-white" />
+            </div>
+            <h3 className="text-3xl font-bold text-gray-900 mb-3">
               Welcome to SimpleChat
             </h3>
-            <p className="text-gray-500">
+            <p className="text-gray-600 text-lg">
               Select a conversation or start a new one
             </p>
           </div>

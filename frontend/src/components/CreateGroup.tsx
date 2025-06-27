@@ -65,39 +65,39 @@ const CreateGroup: React.FC<CreateGroupProps> = ({ onClose, onGroupCreated }) =>
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-md mx-4">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="text-lg font-semibold">Create New Group</h3>
+    <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl w-full max-w-md mx-4 shadow-2xl transform transition-all">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <h3 className="text-xl font-bold text-gray-900">Create New Group</h3>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Group Name
             </label>
             <input
               type="text"
               placeholder="Enter group name"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Description (optional)
             </label>
             <textarea
               placeholder="Enter group description"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none"
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -105,13 +105,13 @@ const CreateGroup: React.FC<CreateGroupProps> = ({ onClose, onGroupCreated }) =>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Add Members
             </label>
             <input
               type="text"
               placeholder="Search users to add"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value)
@@ -129,12 +129,12 @@ const CreateGroup: React.FC<CreateGroupProps> = ({ onClose, onGroupCreated }) =>
                 {selectedUsers.map((user) => (
                   <div
                     key={user._id}
-                    className="flex items-center space-x-1 bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm"
+                    className="flex items-center space-x-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 px-3 py-1.5 rounded-full text-sm font-medium"
                   >
                     <span>{user.name}</span>
                     <button
                       onClick={() => toggleUserSelection(user)}
-                      className="hover:text-green-600"
+                      className="hover:text-purple-600 ml-1"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -178,7 +178,7 @@ const CreateGroup: React.FC<CreateGroupProps> = ({ onClose, onGroupCreated }) =>
           <button
             onClick={handleCreateGroup}
             disabled={!groupName.trim() || selectedUsers.length === 0 || creating}
-            className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 font-medium shadow-lg transform transition-all hover:scale-[1.02]"
           >
             <Users className="w-5 h-5" />
             <span>{creating ? 'Creating...' : 'Create Group'}</span>
