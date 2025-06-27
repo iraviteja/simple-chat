@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, Paperclip, Image, FileText, Film, MoreVertical, Phone, Video, Info } from "lucide-react";
+import { Send, Paperclip, Image, FileText, Film, MoreVertical, Phone, Video, Info, X } from "lucide-react";
 import type { User, Group, Message } from "../types";
 import { useAuth } from "../hooks/useAuth";
 import { useSocket } from "../hooks/useSocket";
@@ -16,6 +16,7 @@ interface MessageData {
   type: "text" | "image" | "pdf" | "video";
   receiver?: string;
   group?: string;
+  replyTo?: string;
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
@@ -25,6 +26,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
   const [typing, setTyping] = useState(false);
   const [otherTyping, setOtherTyping] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -168,6 +170,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
       messageData.group = chatData._id;
     }
 
+    if (replyingTo) {
+      messageData.replyTo = replyingTo._id;
+    }
+
     if (selectedFile) {
       const formData = new FormData();
       formData.append("file", selectedFile);
@@ -176,6 +182,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
         formData.append("receiver", messageData.receiver);
       } else if (messageData.group) {
         formData.append("group", messageData.group);
+      }
+      if (messageData.replyTo) {
+        formData.append("replyTo", messageData.replyTo);
       }
 
       const fileType = selectedFile.type.startsWith("image/")
@@ -201,6 +210,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
     }
 
     setNewMessage("");
+    setReplyingTo(null);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -300,6 +310,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
                   prev.map((m) => (m._id === updatedMessage._id ? updatedMessage : m))
                 );
               }}
+              onReply={setReplyingTo}
             />
           ))
         )}
@@ -348,6 +359,28 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Reply Preview */}
+      {replyingTo && (
+        <div className="px-6 py-3 bg-gray-50 border-t border-gray-200">
+          <div className="flex items-center justify-between bg-white rounded-lg p-3 border-l-4 border-purple-500">
+            <div className="flex-1">
+              <p className="text-xs font-semibold text-purple-600 mb-1">
+                Replying to {replyingTo.sender.name}
+              </p>
+              <p className="text-sm text-gray-700 line-clamp-1">
+                {replyingTo.isDeleted ? 'Message deleted' : replyingTo.content}
+              </p>
+            </div>
+            <button
+              onClick={() => setReplyingTo(null)}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <X className="w-4 h-4 text-gray-500" />
             </button>
           </div>
         </div>

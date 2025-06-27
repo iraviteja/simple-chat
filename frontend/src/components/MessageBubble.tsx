@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import { Check, CheckCheck, Download, MoreVertical, Edit2, Trash2, Smile } from 'lucide-react'
+import { Check, CheckCheck, Download, MoreVertical, Edit2, Trash2, Smile, Reply } from 'lucide-react'
 import { useState } from 'react'
 import type { Message } from '../types'
 import api from '../services/api'
@@ -10,9 +10,10 @@ interface MessageBubbleProps {
   message: Message
   isOwn: boolean
   onMessageUpdate: (message: Message) => void
+  onReply?: (message: Message) => void
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn, onMessageUpdate }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn, onMessageUpdate, onReply }) => {
   const [showMenu, setShowMenu] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(message.content)
@@ -174,6 +175,21 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn, onMessage
               {message.sender.name}
             </p>
           )}
+          
+          {/* Reply Context */}
+          {message.replyTo && (
+            <div className={`mb-2 p-2 rounded-lg text-xs ${
+              isOwn ? 'bg-white/20' : 'bg-gray-100'
+            }`}>
+              <p className={`font-semibold ${isOwn ? 'text-purple-100' : 'text-gray-600'}`}>
+                {message.replyTo.sender.name}
+              </p>
+              <p className={`line-clamp-1 ${isOwn ? 'text-white/80' : 'text-gray-700'}`}>
+                {message.replyTo.isDeleted ? 'Message deleted' : message.replyTo.content}
+              </p>
+            </div>
+          )}
+          
           {renderContent()}
           <div className={`flex items-center justify-between mt-1 ${
             isOwn ? 'text-purple-100' : 'text-gray-500'
@@ -198,8 +214,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn, onMessage
           </div>
         </div>
         
-        {isOwn && !message.isDeleted && message.type === 'text' && (
-          <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        {!message.isDeleted && (
+          <div className={`absolute -top-2 ${isOwn ? '-right-2' : '-left-2'} opacity-0 group-hover:opacity-100 transition-opacity`}>
             <button
               onClick={() => setShowMenu(!showMenu)}
               className="p-1.5 bg-white shadow-md hover:bg-gray-50 rounded-full transition-colors"
@@ -208,21 +224,37 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn, onMessage
             </button>
             
             {showMenu && (
-              <div className="absolute right-0 mt-2 bg-white shadow-xl rounded-xl py-1 z-10 min-w-[120px] border border-gray-100">
-                <button
-                  onClick={handleEdit}
-                  className="flex items-center space-x-2 px-4 py-2 hover:bg-purple-50 w-full text-left transition-colors"
-                >
-                  <Edit2 className="w-4 h-4 text-purple-600" />
-                  <span className="text-sm font-medium">Edit</span>
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="flex items-center space-x-2 px-4 py-2 hover:bg-red-50 w-full text-left text-red-600 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span className="text-sm font-medium">Delete</span>
-                </button>
+              <div className={`absolute ${isOwn ? 'right-0' : 'left-0'} mt-2 bg-white shadow-xl rounded-xl py-1 z-10 min-w-[120px] border border-gray-100`}>
+                {onReply && (
+                  <button
+                    onClick={() => {
+                      onReply(message)
+                      setShowMenu(false)
+                    }}
+                    className="flex items-center space-x-2 px-4 py-2 hover:bg-purple-50 w-full text-left transition-colors"
+                  >
+                    <Reply className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm font-medium">Reply</span>
+                  </button>
+                )}
+                {isOwn && message.type === 'text' && (
+                  <>
+                    <button
+                      onClick={handleEdit}
+                      className="flex items-center space-x-2 px-4 py-2 hover:bg-purple-50 w-full text-left transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4 text-purple-600" />
+                      <span className="text-sm font-medium">Edit</span>
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="flex items-center space-x-2 px-4 py-2 hover:bg-red-50 w-full text-left text-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span className="text-sm font-medium">Delete</span>
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>

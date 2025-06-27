@@ -57,7 +57,7 @@ router.post(
     try {
       console.log("Request body:", req.body);
       console.log("Request file:", req.file);
-      const { receiver, group, content, type = "text" } = req.body;
+      const { receiver, group, content, type = "text", replyTo } = req.body;
 
       const messageData = {
         sender: req.user._id,
@@ -73,6 +73,10 @@ router.post(
         return res.status(400).json({ message: "Receiver or group required" });
       }
 
+      if (replyTo) {
+        messageData.replyTo = replyTo;
+      }
+
       if (req.file) {
         messageData.fileUrl = `/uploads/${req.file.filename}`;
         messageData.fileName = req.file.originalname;
@@ -83,7 +87,14 @@ router.post(
       const populatedMessage = await Message.findById(message._id)
         .populate("sender", "name")
         .populate("receiver", "name")
-        .populate("group", "name");
+        .populate("group", "name")
+        .populate({
+          path: "replyTo",
+          populate: {
+            path: "sender",
+            select: "name"
+          }
+        });
 
       // Emit message through Socket.IO
       const io = req.app.get("io");
@@ -116,6 +127,13 @@ router.get("/chat/:userId", protect, async (req, res) => {
       .populate("sender", "name")
       .populate("receiver", "name")
       .populate("reactions.users", "name")
+      .populate({
+        path: "replyTo",
+        populate: {
+          path: "sender",
+          select: "name"
+        }
+      })
       .sort("createdAt");
 
     res.json(messages);
@@ -130,6 +148,13 @@ router.get("/group/:groupId", protect, async (req, res) => {
     const messages = await Message.find({ group: req.params.groupId })
       .populate("sender", "name")
       .populate("reactions.users", "name")
+      .populate({
+        path: "replyTo",
+        populate: {
+          path: "sender",
+          select: "name"
+        }
+      })
       .sort("createdAt");
 
     res.json(messages);
