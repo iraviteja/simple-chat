@@ -5,9 +5,7 @@ import {
   Image,
   FileText,
   Film,
-  Phone,
   Video,
-  Info,
   X,
 } from "lucide-react";
 import type { User, Group, Message } from "../types";
