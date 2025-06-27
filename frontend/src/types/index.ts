@@ -5,6 +5,11 @@ export interface User {
   lastSeen?: Date;
 }
 
+export interface Reaction {
+  emoji: string;
+  users: User[];
+}
+
 export interface Message {
   _id: string;
   sender: User;
@@ -21,6 +26,7 @@ export interface Message {
   editedAt?: string;
   isDeleted?: boolean;
   deletedAt?: string;
+  reactions?: Reaction[];
   createdAt: string;
   updatedAt: string;
 }

@@ -115,6 +115,7 @@ router.get("/chat/:userId", protect, async (req, res) => {
     })
       .populate("sender", "name")
       .populate("receiver", "name")
+      .populate("reactions.users", "name")
       .sort("createdAt");
 
     res.json(messages);
@@ -128,6 +129,7 @@ router.get("/group/:groupId", protect, async (req, res) => {
   try {
     const messages = await Message.find({ group: req.params.groupId })
       .populate("sender", "name")
+      .populate("reactions.users", "name")
       .sort("createdAt");
 
     res.json(messages);
@@ -269,6 +271,64 @@ router.delete("/:messageId", protect, async (req, res) => {
     }
 
     res.json(deletedMessage);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Add reaction to message
+router.post("/:messageId/reactions", protect, async (req, res) => {
+  try {
+    const { emoji } = req.body;
+    const message = await Message.findById(req.params.messageId);
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Find if this emoji already exists
+    let reaction = message.reactions.find(r => r.emoji === emoji);
+    
+    if (reaction) {
+      // Check if user already reacted with this emoji
+      const userIndex = reaction.users.indexOf(req.user._id);
+      if (userIndex > -1) {
+        // Remove user's reaction
+        reaction.users.splice(userIndex, 1);
+        // If no users left, remove the reaction
+        if (reaction.users.length === 0) {
+          message.reactions = message.reactions.filter(r => r.emoji !== emoji);
+        }
+      } else {
+        // Add user's reaction
+        reaction.users.push(req.user._id);
+      }
+    } else {
+      // Add new reaction
+      message.reactions.push({
+        emoji,
+        users: [req.user._id]
+      });
+    }
+
+    await message.save();
+
+    const updatedMessage = await Message.findById(message._id)
+      .populate("sender", "name")
+      .populate("receiver", "name")
+      .populate("group", "name")
+      .populate("reactions.users", "name");
+
+    // Emit reaction update through Socket.IO
+    const io = req.app.get("io");
+    if (message.receiver) {
+      io.to(message.receiver.toString()).emit("message-reaction-updated", updatedMessage);
+      io.to(req.user._id.toString()).emit("message-reaction-updated", updatedMessage);
+    } else if (message.group) {
+      io.to(`group-${message.group}`).emit("message-reaction-updated", updatedMessage);
+    }
+
+    res.json(updatedMessage);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

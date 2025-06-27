@@ -1,8 +1,10 @@
 import { format } from 'date-fns'
-import { Check, CheckCheck, Download, MoreVertical, Edit2, Trash2 } from 'lucide-react'
+import { Check, CheckCheck, Download, MoreVertical, Edit2, Trash2, Smile } from 'lucide-react'
 import { useState } from 'react'
 import type { Message } from '../types'
 import api from '../services/api'
+import EmojiPicker from './EmojiPicker'
+import { useAuth } from '../hooks/useAuth'
 
 interface MessageBubbleProps {
   message: Message
@@ -14,6 +16,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn, onMessage
   const [showMenu, setShowMenu] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(message.content)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const { user } = useAuth()
   const baseURL = (import.meta.env.VITE_API_URL || 'http://localhost:5005').replace(/\/$/, '')
   const renderContent = () => {
     switch (message.type) {
@@ -142,6 +146,21 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn, onMessage
     setShowMenu(false)
   }
 
+  const handleReaction = async (emoji: string) => {
+    try {
+      const response = await api.post(`/messages/${message._id}/reactions`, { emoji })
+      onMessageUpdate(response.data)
+    } catch (error) {
+      console.error('Failed to add reaction:', error)
+    }
+  }
+
+  const getUserReaction = (emoji: string) => {
+    if (!message.reactions || !user) return false
+    const reaction = message.reactions.find(r => r.emoji === emoji)
+    return reaction?.users.some(u => u._id === user._id)
+  }
+
   return (
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-2 group`}>
       <div className="relative">
@@ -206,6 +225,46 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn, onMessage
                 </button>
               </div>
             )}
+          </div>
+        )}
+        
+        {/* Emoji Reaction Button */}
+        {!message.isDeleted && (
+          <div className="absolute -bottom-2 -left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="p-1.5 bg-white shadow-md hover:bg-gray-50 rounded-full transition-colors border border-gray-100"
+            >
+              <Smile className="w-4 h-4 text-gray-600" />
+            </button>
+            
+            {showEmojiPicker && (
+              <EmojiPicker
+                onEmojiSelect={handleReaction}
+                onClose={() => setShowEmojiPicker(false)}
+              />
+            )}
+          </div>
+        )}
+        
+        {/* Reactions Display */}
+        {message.reactions && message.reactions.length > 0 && (
+          <div className="absolute -bottom-6 left-0 flex items-center space-x-1">
+            {message.reactions.map((reaction) => (
+              <button
+                key={reaction.emoji}
+                onClick={() => handleReaction(reaction.emoji)}
+                className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs transition-all ${
+                  getUserReaction(reaction.emoji)
+                    ? 'bg-purple-100 border border-purple-300'
+                    : 'bg-gray-100 border border-gray-200 hover:bg-gray-200'
+                }`}
+                title={reaction.users.map(u => u.name).join(', ')}
+              >
+                <span>{reaction.emoji}</span>
+                <span className="font-medium">{reaction.users.length}</span>
+              </button>
+            ))}
           </div>
         )}
       </div>

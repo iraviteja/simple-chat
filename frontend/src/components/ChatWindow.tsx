@@ -80,12 +80,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
       );
     };
 
+    const handleReactionUpdate = (message: Message) => {
+      setMessages((prev) =>
+        prev.map((m) => (m._id === message._id ? message : m))
+      );
+    };
+
     socket.on("receive-message", handleNewMessage);
     socket.on("message-sent", handleNewMessage);
     socket.on("user-typing", handleTyping);
     socket.on("user-stop-typing", handleStopTyping);
     socket.on("message-edited", handleMessageEdit);
     socket.on("message-deleted", handleMessageDelete);
+    socket.on("message-reaction-updated", handleReactionUpdate);
 
     return () => {
       socket.off("receive-message", handleNewMessage);
@@ -94,6 +101,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
       socket.off("user-stop-typing", handleStopTyping);
       socket.off("message-edited", handleMessageEdit);
       socket.off("message-deleted", handleMessageDelete);
+      socket.off("message-reaction-updated", handleReactionUpdate);
     };
   }, [socket, chatData._id, chatType]);
 
@@ -266,7 +274,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-gradient-to-b from-slate-50 to-white">
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6 bg-gradient-to-b from-slate-50 to-white">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-10 w-10 border-4 border-purple-500 border-t-transparent"></div>
