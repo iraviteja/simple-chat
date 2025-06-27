@@ -17,6 +17,10 @@ export interface Message {
   fileSize?: number;
   read: boolean;
   delivered: boolean;
+  isEdited?: boolean;
+  editedAt?: string;
+  isDeleted?: boolean;
+  deletedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

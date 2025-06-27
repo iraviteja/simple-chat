@@ -41,11 +41,21 @@ const Chat = () => {
       fetchAllUsers();
     });
 
+    socket.on("message-edited", () => {
+      fetchConversations();
+    });
+
+    socket.on("message-deleted", () => {
+      fetchConversations();
+    });
+
     return () => {
       socket.off("receive-message");
       socket.off("message-sent");
       socket.off("user-joined");
       socket.off("user-left");
+      socket.off("message-edited");
+      socket.off("message-deleted");
     };
   }, [socket]);
 

@@ -188,4 +188,90 @@ router.get("/conversations", protect, async (req, res) => {
   }
 });
 
+// Edit message
+router.put("/:messageId", protect, async (req, res) => {
+  try {
+    const { content } = req.body;
+    const message = await Message.findById(req.params.messageId);
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Check if user is the sender
+    if (message.sender.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "You can only edit your own messages" });
+    }
+
+    // Check if message is deleted
+    if (message.isDeleted) {
+      return res.status(400).json({ message: "Cannot edit deleted message" });
+    }
+
+    // Update message
+    message.content = content;
+    message.isEdited = true;
+    message.editedAt = new Date();
+    await message.save();
+
+    const updatedMessage = await Message.findById(message._id)
+      .populate("sender", "name")
+      .populate("receiver", "name")
+      .populate("group", "name");
+
+    // Emit update through Socket.IO
+    const io = req.app.get("io");
+    if (message.receiver) {
+      io.to(message.receiver.toString()).emit("message-edited", updatedMessage);
+      io.to(req.user._id.toString()).emit("message-edited", updatedMessage);
+    } else if (message.group) {
+      io.to(`group-${message.group}`).emit("message-edited", updatedMessage);
+    }
+
+    res.json(updatedMessage);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Delete message
+router.delete("/:messageId", protect, async (req, res) => {
+  try {
+    const message = await Message.findById(req.params.messageId);
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Check if user is the sender
+    if (message.sender.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "You can only delete your own messages" });
+    }
+
+    // Soft delete
+    message.isDeleted = true;
+    message.deletedAt = new Date();
+    message.content = "This message was deleted";
+    await message.save();
+
+    const deletedMessage = await Message.findById(message._id)
+      .populate("sender", "name")
+      .populate("receiver", "name")
+      .populate("group", "name");
+
+    // Emit delete through Socket.IO
+    const io = req.app.get("io");
+    if (message.receiver) {
+      io.to(message.receiver.toString()).emit("message-deleted", deletedMessage);
+      io.to(req.user._id.toString()).emit("message-deleted", deletedMessage);
+    } else if (message.group) {
+      io.to(`group-${message.group}`).emit("message-deleted", deletedMessage);
+    }
+
+    res.json(deletedMessage);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

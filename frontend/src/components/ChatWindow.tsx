@@ -68,16 +68,32 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
       }
     };
 
+    const handleMessageEdit = (message: Message) => {
+      setMessages((prev) =>
+        prev.map((m) => (m._id === message._id ? message : m))
+      );
+    };
+
+    const handleMessageDelete = (message: Message) => {
+      setMessages((prev) =>
+        prev.map((m) => (m._id === message._id ? message : m))
+      );
+    };
+
     socket.on("receive-message", handleNewMessage);
     socket.on("message-sent", handleNewMessage);
     socket.on("user-typing", handleTyping);
     socket.on("user-stop-typing", handleStopTyping);
+    socket.on("message-edited", handleMessageEdit);
+    socket.on("message-deleted", handleMessageDelete);
 
     return () => {
       socket.off("receive-message", handleNewMessage);
       socket.off("message-sent", handleNewMessage);
       socket.off("user-typing", handleTyping);
       socket.off("user-stop-typing", handleStopTyping);
+      socket.off("message-edited", handleMessageEdit);
+      socket.off("message-deleted", handleMessageDelete);
     };
   }, [socket, chatData._id, chatType]);
 
@@ -248,6 +264,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
               key={message._id}
               message={message}
               isOwn={message.sender._id === user?._id}
+              onMessageUpdate={(updatedMessage) => {
+                setMessages((prev) =>
+                  prev.map((m) => (m._id === updatedMessage._id ? updatedMessage : m))
+                );
+              }}
             />
           ))
         )}
