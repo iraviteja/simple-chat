@@ -1,10 +1,21 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, Paperclip, Image, FileText, Film, Phone, Video, Info, X } from "lucide-react";
+import {
+  Send,
+  Paperclip,
+  Image,
+  FileText,
+  Film,
+  Phone,
+  Video,
+  Info,
+  X,
+} from "lucide-react";
 import type { User, Group, Message } from "../types";
 import { useAuth } from "../hooks/useAuth";
 import { useSocket } from "../hooks/useSocket";
 import api from "../services/api";
 import MessageBubble from "./MessageBubble";
+import VideoCall from "./VideoCall";
 
 interface ChatWindowProps {
   chatType: "user" | "group";
@@ -27,6 +38,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
   const [otherTyping, setOtherTyping] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [showVideoCall, setShowVideoCall] = useState(false);
+  const [isIncomingCall, setIsIncomingCall] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -89,6 +102,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
       );
     };
 
+    const handleIncomingCall = (data: { from: string }) => {
+      if (chatType === "user" && data.from === chatData._id) {
+        setIsIncomingCall(true);
+        setShowVideoCall(true);
+      }
+    };
+
     socket.on("receive-message", handleNewMessage);
     socket.on("message-sent", handleNewMessage);
     socket.on("user-typing", handleTyping);
@@ -96,6 +116,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
     socket.on("message-edited", handleMessageEdit);
     socket.on("message-deleted", handleMessageDelete);
     socket.on("message-reaction-updated", handleReactionUpdate);
+    socket.on("incoming-call", handleIncomingCall);
 
     return () => {
       socket.off("receive-message", handleNewMessage);
@@ -105,6 +126,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
       socket.off("message-edited", handleMessageEdit);
       socket.off("message-deleted", handleMessageDelete);
       socket.off("message-reaction-updated", handleReactionUpdate);
+      socket.off("incoming-call", handleIncomingCall);
     };
   }, [socket, chatData._id, chatType]);
 
@@ -251,11 +273,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="relative">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold shadow-md ${
-                chatType === "user" 
-                  ? "bg-gradient-to-br from-blue-500 to-purple-500"
-                  : "bg-gradient-to-br from-green-500 to-teal-500"
-              }`}>
+              <div
+                className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold shadow-md ${
+                  chatType === "user"
+                    ? "bg-gradient-to-br from-blue-500 to-purple-500"
+                    : "bg-gradient-to-br from-green-500 to-teal-500"
+                }`}
+              >
                 {chatType === "user" ? (
                   (chatData as User).name[0].toUpperCase()
                 ) : (
@@ -281,16 +305,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-2">
-            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-              <Phone className="w-5 h-5" />
-            </button>
-            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+            <button
+              onClick={() => setShowVideoCall(true)}
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
               <Video className="w-5 h-5" />
-            </button>
-            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-              <Info className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -309,7 +330,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
                 <Send className="w-10 h-10 text-gray-400" />
               </div>
               <p className="text-gray-500 text-lg">No messages yet</p>
-              <p className="text-gray-400 text-sm mt-1">Start a conversation!</p>
+              <p className="text-gray-400 text-sm mt-1">
+                Start a conversation!
+              </p>
             </div>
           </div>
         ) : (
@@ -320,7 +343,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
               isOwn={message.sender._id === user?._id}
               onMessageUpdate={(updatedMessage) => {
                 setMessages((prev) =>
-                  prev.map((m) => (m._id === updatedMessage._id ? updatedMessage : m))
+                  prev.map((m) =>
+                    m._id === updatedMessage._id ? updatedMessage : m
+                  )
                 );
               }}
               onReply={setReplyingTo}
@@ -359,7 +384,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
                 {getFileIcon(selectedFile)}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">{selectedFile.name}</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {selectedFile.name}
+                </p>
                 <p className="text-xs text-gray-500">
                   {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
@@ -369,8 +396,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
               onClick={() => setSelectedFile(null)}
               className="text-gray-400 hover:text-gray-600"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -386,7 +423,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
                 Replying to {replyingTo.sender.name}
               </p>
               <p className="text-sm text-gray-700 line-clamp-1">
-                {replyingTo.isDeleted ? 'Message deleted' : replyingTo.content}
+                {replyingTo.isDeleted ? "Message deleted" : replyingTo.content}
               </p>
             </div>
             <button
@@ -446,6 +483,17 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
           onChange={handleFileSelect}
         />
       </div>
+
+      {showVideoCall && chatType === "user" && (
+        <VideoCall
+          otherUser={chatData as User}
+          onClose={() => {
+            setShowVideoCall(false);
+            setIsIncomingCall(false);
+          }}
+          isIncoming={isIncomingCall}
+        />
+      )}
     </div>
   );
 };

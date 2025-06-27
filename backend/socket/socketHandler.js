@@ -178,6 +178,34 @@ const socketHandler = (io) => {
       socket.join(`group-${groupId}`);
     });
 
+    // Video call events
+    socket.on("call-user", ({ to, offer }) => {
+      io.to(to).emit("incoming-call", {
+        from: socket.userId,
+        offer,
+      });
+    });
+
+    socket.on("call-answer", ({ to, answer }) => {
+      io.to(to).emit("call-answered", {
+        from: socket.userId,
+        answer,
+      });
+    });
+
+    socket.on("ice-candidate", ({ to, candidate }) => {
+      io.to(to).emit("ice-candidate", {
+        from: socket.userId,
+        candidate,
+      });
+    });
+
+    socket.on("end-call", ({ to }) => {
+      io.to(to).emit("call-ended", {
+        from: socket.userId,
+      });
+    });
+
     // Handle disconnect
     socket.on("disconnect", async () => {
       console.log(`User ${socket.user.name} disconnected`);
