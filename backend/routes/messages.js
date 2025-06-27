@@ -92,8 +92,8 @@ router.post(
           path: "replyTo",
           populate: {
             path: "sender",
-            select: "name"
-          }
+            select: "name",
+          },
         });
 
       // Emit message through Socket.IO
@@ -131,8 +131,8 @@ router.get("/chat/:userId", protect, async (req, res) => {
         path: "replyTo",
         populate: {
           path: "sender",
-          select: "name"
-        }
+          select: "name",
+        },
       })
       .sort("createdAt");
 
@@ -152,8 +152,8 @@ router.get("/group/:groupId", protect, async (req, res) => {
         path: "replyTo",
         populate: {
           path: "sender",
-          select: "name"
-        }
+          select: "name",
+        },
       })
       .sort("createdAt");
 
@@ -198,13 +198,13 @@ router.get("/conversations", protect, async (req, res) => {
                 cond: {
                   $and: [
                     { $eq: ["$$this.receiver", userId] },
-                    { $eq: ["$$this.read", false] }
-                  ]
-                }
-              }
-            }
-          }
-        }
+                    { $eq: ["$$this.read", false] },
+                  ],
+                },
+              },
+            },
+          },
+        },
       },
       {
         $lookup: {
@@ -248,7 +248,9 @@ router.put("/:messageId", protect, async (req, res) => {
 
     // Check if user is the sender
     if (message.sender.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "You can only edit your own messages" });
+      return res
+        .status(403)
+        .json({ message: "You can only edit your own messages" });
     }
 
     // Check if message is deleted
@@ -293,7 +295,9 @@ router.delete("/:messageId", protect, async (req, res) => {
 
     // Check if user is the sender
     if (message.sender.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "You can only delete your own messages" });
+      return res
+        .status(403)
+        .json({ message: "You can only delete your own messages" });
     }
 
     // Soft delete
@@ -310,7 +314,10 @@ router.delete("/:messageId", protect, async (req, res) => {
     // Emit delete through Socket.IO
     const io = req.app.get("io");
     if (message.receiver) {
-      io.to(message.receiver.toString()).emit("message-deleted", deletedMessage);
+      io.to(message.receiver.toString()).emit(
+        "message-deleted",
+        deletedMessage
+      );
       io.to(req.user._id.toString()).emit("message-deleted", deletedMessage);
     } else if (message.group) {
       io.to(`group-${message.group}`).emit("message-deleted", deletedMessage);
@@ -330,10 +337,10 @@ router.put("/read/:userId", protect, async (req, res) => {
       {
         sender: req.params.userId,
         receiver: req.user._id,
-        read: false
+        read: false,
       },
       {
-        read: true
+        read: true,
       }
     );
 
@@ -348,16 +355,16 @@ router.put("/read/group/:groupId", protect, async (req, res) => {
   try {
     // Get the last read timestamp for this user in this group
     const lastReadTime = new Date();
-    
+
     // Mark all group messages as read up to current time
     await Message.updateMany(
       {
         group: req.params.groupId,
         sender: { $ne: req.user._id },
-        createdAt: { $lte: lastReadTime }
+        createdAt: { $lte: lastReadTime },
       },
       {
-        read: true
+        read: true,
       }
     );
 
@@ -377,28 +384,30 @@ router.post("/:messageId/reactions", protect, async (req, res) => {
       return res.status(404).json({ message: "Message not found" });
     }
 
-    // Find if this emoji already exists
-    let reaction = message.reactions.find(r => r.emoji === emoji);
-    
-    if (reaction) {
-      // Check if user already reacted with this emoji
+    // Remove user from all existing reactions first
+    message.reactions.forEach((reaction) => {
       const userIndex = reaction.users.indexOf(req.user._id);
       if (userIndex > -1) {
-        // Remove user's reaction
         reaction.users.splice(userIndex, 1);
-        // If no users left, remove the reaction
-        if (reaction.users.length === 0) {
-          message.reactions = message.reactions.filter(r => r.emoji !== emoji);
-        }
-      } else {
-        // Add user's reaction
+      }
+    });
+
+    // Clean up any reactions with no users
+    message.reactions = message.reactions.filter((r) => r.users.length > 0);
+
+    // Find or create the new reaction
+    let reaction = message.reactions.find((r) => r.emoji === emoji);
+
+    if (reaction) {
+      // Add user to existing reaction if they're not toggling it off
+      if (!reaction.users.includes(req.user._id)) {
         reaction.users.push(req.user._id);
       }
     } else {
       // Add new reaction
       message.reactions.push({
         emoji,
-        users: [req.user._id]
+        users: [req.user._id],
       });
     }
 
@@ -413,10 +422,19 @@ router.post("/:messageId/reactions", protect, async (req, res) => {
     // Emit reaction update through Socket.IO
     const io = req.app.get("io");
     if (message.receiver) {
-      io.to(message.receiver.toString()).emit("message-reaction-updated", updatedMessage);
-      io.to(req.user._id.toString()).emit("message-reaction-updated", updatedMessage);
+      io.to(message.receiver.toString()).emit(
+        "message-reaction-updated",
+        updatedMessage
+      );
+      io.to(req.user._id.toString()).emit(
+        "message-reaction-updated",
+        updatedMessage
+      );
     } else if (message.group) {
-      io.to(`group-${message.group}`).emit("message-reaction-updated", updatedMessage);
+      io.to(`group-${message.group}`).emit(
+        "message-reaction-updated",
+        updatedMessage
+      );
     }
 
     res.json(updatedMessage);

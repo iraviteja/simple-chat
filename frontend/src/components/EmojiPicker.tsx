@@ -1,19 +1,23 @@
-
 interface EmojiPickerProps {
   onEmojiSelect: (emoji: string) => void;
   onClose: () => void;
+  isOwn?: boolean;
 }
 
-const EmojiPicker: React.FC<EmojiPickerProps> = ({ onEmojiSelect, onClose }) => {
-  const commonEmojis = [
-    '👍', '❤️', '😂', '😮', '😢', '😡',
-    '🎉', '🔥', '👏', '💯', '🤔', '👀',
-    '🙏', '😍', '🤗', '😅', '😊', '🥳'
-  ];
+const EmojiPicker: React.FC<EmojiPickerProps> = ({
+  onEmojiSelect,
+  onClose,
+  isOwn,
+}) => {
+  const commonEmojis = ["👍", "❤️", "😂", "😮", "🎉"];
 
   return (
-    <div className="absolute bottom-full mb-2 left-0 bg-white rounded-xl shadow-xl border border-gray-100 p-2 z-50">
-      <div className="grid grid-cols-6 gap-1">
+    <div
+      className={`absolute bottom-full mb-2 ${
+        isOwn ? "right-0" : "left-0"
+      } bg-white rounded-xl shadow-xl border border-gray-100 p-3 z-50`}
+    >
+      <div className="flex gap-2">
         {commonEmojis.map((emoji) => (
           <button
             key={emoji}
@@ -21,7 +25,7 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ onEmojiSelect, onClose }) => 
               onEmojiSelect(emoji);
               onClose();
             }}
-            className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors text-xl"
+            className="w-11 h-11 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors text-2xl"
           >
             {emoji}
           </button>

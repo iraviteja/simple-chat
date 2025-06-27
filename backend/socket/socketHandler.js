@@ -118,6 +118,61 @@ const socketHandler = (io) => {
       socket.emit("message-read", messageId);
     });
 
+    // Handle reactions
+    socket.on("message-reaction", async ({ messageId, emoji }) => {
+      try {
+        const message = await Message.findById(messageId);
+        if (!message) return;
+
+        // Remove user from all existing reactions
+        message.reactions.forEach((reaction) => {
+          const userIndex = reaction.users.indexOf(socket.userId);
+          if (userIndex > -1) {
+            reaction.users.splice(userIndex, 1);
+          }
+        });
+
+        // Clean up reactions with no users
+        message.reactions = message.reactions.filter((r) => r.users.length > 0);
+
+        // Add new reaction
+        const existingReaction = message.reactions.find(
+          (r) => r.emoji === emoji
+        );
+        if (existingReaction) {
+          existingReaction.users.push(socket.userId);
+        } else {
+          message.reactions.push({
+            emoji,
+            users: [socket.userId],
+          });
+        }
+
+        await message.save();
+
+        const updatedMessage = await Message.findById(messageId)
+          .populate("sender", "name")
+          .populate("receiver", "name")
+          .populate("group", "name")
+          .populate("reactions.users", "name");
+
+        if (message.receiver) {
+          io.to(message.receiver.toString()).emit(
+            "message-reaction-updated",
+            updatedMessage
+          );
+          io.to(socket.userId).emit("message-reaction-updated", updatedMessage);
+        } else if (message.group) {
+          io.to(`group-${message.group}`).emit(
+            "message-reaction-updated",
+            updatedMessage
+          );
+        }
+      } catch (error) {
+        console.error("Error handling reaction:", error);
+      }
+    });
+
     // Handle joining new group
     socket.on("join-group", (groupId) => {
       socket.join(`group-${groupId}`);
