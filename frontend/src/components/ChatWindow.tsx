@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Send, Paperclip, Image, FileText, Film } from "lucide-react";
 import type { User, Group, Message } from "../types";
 import { useAuth } from "../hooks/useAuth";
-import { useSocket } from "../contexts/SocketContext";
+import { useSocket } from "../hooks/useSocket";
 import api from "../services/api";
 import MessageBubble from "./MessageBubble";
 

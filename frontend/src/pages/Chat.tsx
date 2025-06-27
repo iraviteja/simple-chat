@@ -4,7 +4,7 @@ import ChatWindow from "../components/ChatWindow";
 import OnlineUsersSidebar from "../components/OnlineUsersSidebar";
 import type { User, Group, Conversation } from "../types";
 import api from "../services/api";
-import { useSocket } from "../contexts/SocketContext";
+import { useSocket } from "../hooks/useSocket";
 
 const Chat = () => {
   const [selectedChat, setSelectedChat] = useState<{

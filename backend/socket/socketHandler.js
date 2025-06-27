@@ -3,6 +3,9 @@ const User = require("../models/User");
 const Message = require("../models/Message");
 
 const socketHandler = (io) => {
+  // Keep track of online users
+  const onlineUsers = new Set();
+
   // Middleware to authenticate socket connections
   io.use(async (socket, next) => {
     try {
@@ -26,6 +29,9 @@ const socketHandler = (io) => {
       lastSeen: new Date(),
     });
 
+    // Add user to online users set
+    onlineUsers.add(socket.userId);
+
     // Join user's personal room
     socket.join(socket.userId);
 
@@ -34,6 +40,9 @@ const socketHandler = (io) => {
     user.joinedGroups.forEach((group) => {
       socket.join(`group-${group._id}`);
     });
+
+    // Send current online users to the newly connected user
+    socket.emit("initial-online-users", Array.from(onlineUsers));
 
     // Notify others that user is online
     socket.broadcast.emit("user-online", socket.userId);
@@ -64,8 +73,8 @@ const socketHandler = (io) => {
 
         const message = await Message.create(messageData);
         const populatedMessage = await Message.findById(message._id)
-          .populate("sender", "username profileImage")
-          .populate("receiver", "username profileImage")
+          .populate("sender", "name")
+          .populate("receiver", "name")
           .populate("group", "name");
 
         // Send to receiver or group
@@ -117,6 +126,9 @@ const socketHandler = (io) => {
     // Handle disconnect
     socket.on("disconnect", async () => {
       console.log(`User ${socket.user.name} disconnected`);
+
+      // Remove user from online users set
+      onlineUsers.delete(socket.userId);
 
       // Update user offline status
       await User.findByIdAndUpdate(socket.userId, {

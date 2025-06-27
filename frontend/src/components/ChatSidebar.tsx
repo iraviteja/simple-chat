@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Search, Users, LogOut, Plus } from "lucide-react";
 import type { Conversation, Group, User } from "../types";
 import { useAuth } from "../hooks/useAuth";
-import { useSocket } from "../contexts/SocketContext";
+import { useSocket } from "../hooks/useSocket";
 import UserSearch from "./UserSearch";
 import CreateGroup from "./CreateGroup";
 import { format } from "date-fns";
