@@ -161,8 +161,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatType, chatData }) => {
         const response = await api.post("/messages", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        // Add the message to local state immediately
-        setMessages((prev) => [...prev, response.data]);
         setSelectedFile(null);
       } catch (error) {
         console.error("Failed to send file:", error);
